@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  addActivity,
-  deleteActivity,
-  getActivitiesForLead,
-} from "@/lib/activityStorage";
+import { addActivity, deleteActivity, getActivitiesForLead } from "@/lib/activityStorage";
 import { activityTypeIcons, activityTypeLabels } from "@/types/activity";
 import type { ActivityEntry, ActivityType } from "@/types/activity";
 
@@ -16,33 +12,41 @@ export function ActivityLog({ leadId }: { leadId: string }) {
   const [type, setType] = useState<ActivityType>("call");
   const [note, setNote] = useState("");
   const [createdBy, setCreatedBy] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const noteRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    setEntries(getActivitiesForLead(leadId));
+    getActivitiesForLead(leadId).then(setEntries).catch(console.error);
   }, [leadId]);
 
-  function handleAdd(e: React.FormEvent) {
+  async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!note.trim()) return;
-    addActivity(leadId, type, note, createdBy || undefined);
-    setEntries(getActivitiesForLead(leadId));
-    setNote("");
-    noteRef.current?.focus();
+    if (!note.trim() || submitting) return;
+    setSubmitting(true);
+    try {
+      await addActivity(leadId, type, note, createdBy || undefined);
+      setEntries(await getActivitiesForLead(leadId));
+      setNote("");
+      noteRef.current?.focus();
+    } catch (err) {
+      alert("บันทึกไม่สำเร็จ: " + (err instanceof Error ? err.message : ""));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
-  function handleDelete(id: string) {
-    deleteActivity(id);
-    setEntries(getActivitiesForLead(leadId));
+  async function handleDelete(id: string) {
+    try {
+      await deleteActivity(id);
+      setEntries((prev) => prev.filter((e) => e.id !== id));
+    } catch (err) {
+      alert("ลบไม่สำเร็จ: " + (err instanceof Error ? err.message : ""));
+    }
   }
 
   function formatDate(iso: string) {
     return new Date(iso).toLocaleString("th-TH", {
-      day: "numeric",
-      month: "short",
-      year: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
+      day: "numeric", month: "short", year: "2-digit", hour: "2-digit", minute: "2-digit",
     });
   }
 
@@ -54,8 +58,7 @@ export function ActivityLog({ leadId }: { leadId: string }) {
         <div className="activity-type-row">
           {ACTIVITY_TYPES.map((t) => (
             <button
-              key={t}
-              type="button"
+              key={t} type="button"
               className={`activity-type-btn${type === t ? " active" : ""}`}
               onClick={() => setType(t)}
             >
@@ -79,8 +82,8 @@ export function ActivityLog({ leadId }: { leadId: string }) {
               value={createdBy}
               onChange={(e) => setCreatedBy(e.target.value)}
             />
-            <button className="button" type="submit" disabled={!note.trim()}>
-              บันทึก
+            <button className="button" type="submit" disabled={!note.trim() || submitting}>
+              {submitting ? "กำลังบันทึก..." : "บันทึก"}
             </button>
           </div>
         </div>
@@ -101,14 +104,7 @@ export function ActivityLog({ leadId }: { leadId: string }) {
                 </div>
                 <p className="activity-note-text">{entry.note}</p>
               </div>
-              <button
-                className="activity-delete"
-                type="button"
-                title="ลบ"
-                onClick={() => handleDelete(entry.id)}
-              >
-                ×
-              </button>
+              <button className="activity-delete" type="button" title="ลบ" onClick={() => handleDelete(entry.id)}>×</button>
             </li>
           ))}
         </ul>

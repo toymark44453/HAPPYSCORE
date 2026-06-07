@@ -1,60 +1,80 @@
+import { supabase } from "./supabase";
 import type { ActivityEntry, ActivityType } from "@/types/activity";
 
-const STORAGE_KEY = "happy_activities_v0_1";
+export async function loadActivities(): Promise<ActivityEntry[]> {
+  const { data, error } = await supabase
+    .from("activities")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-function isBrowser(): boolean {
-  return typeof window !== "undefined";
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    leadId: row.lead_id as string,
+    type: row.type as ActivityType,
+    note: row.note as string,
+    createdAt: row.created_at as string,
+    createdBy: row.created_by as string | undefined,
+  }));
 }
 
-export function loadActivities(): ActivityEntry[] {
-  if (!isBrowser()) return [];
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw) as ActivityEntry[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+export async function getActivitiesForLead(leadId: string): Promise<ActivityEntry[]> {
+  const { data, error } = await supabase
+    .from("activities")
+    .select("*")
+    .eq("lead_id", leadId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    leadId: row.lead_id as string,
+    type: row.type as ActivityType,
+    note: row.note as string,
+    createdAt: row.created_at as string,
+    createdBy: row.created_by as string | undefined,
+  }));
 }
 
-function saveActivities(entries: ActivityEntry[]): void {
-  if (!isBrowser()) return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-}
-
-export function getActivitiesForLead(leadId: string): ActivityEntry[] {
-  return loadActivities()
-    .filter((a) => a.leadId === leadId)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-}
-
-export function addActivity(
+export async function addActivity(
   leadId: string,
   type: ActivityType,
   note: string,
   createdBy?: string
-): ActivityEntry {
-  const entry: ActivityEntry = {
-    id: crypto.randomUUID(),
-    leadId,
-    type,
-    note: note.trim(),
-    createdAt: new Date().toISOString(),
-    createdBy,
+): Promise<ActivityEntry> {
+  const { data, error } = await supabase
+    .from("activities")
+    .insert({ lead_id: leadId, type, note: note.trim(), created_by: createdBy ?? null })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return {
+    id: data.id as string,
+    leadId: data.lead_id as string,
+    type: data.type as ActivityType,
+    note: data.note as string,
+    createdAt: data.created_at as string,
+    createdBy: data.created_by as string | undefined,
   };
-  const all = loadActivities();
-  saveActivities([entry, ...all]);
-  return entry;
 }
 
-export function deleteActivity(id: string): void {
-  saveActivities(loadActivities().filter((a) => a.id !== id));
+export async function deleteActivity(id: string): Promise<void> {
+  const { error } = await supabase.from("activities").delete().eq("id", id);
+  if (error) throw new Error(error.message);
 }
 
-export function getLastContactDate(leadId: string): string | null {
-  const entries = getActivitiesForLead(leadId);
-  return entries.length > 0 ? entries[0].createdAt : null;
+export async function getLastContactDate(leadId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("activities")
+    .select("created_at")
+    .eq("lead_id", leadId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error || !data) return null;
+  return data.created_at as string;
 }
 
 export function formatRelativeTime(isoDate: string): string {
@@ -67,6 +87,5 @@ export function formatRelativeTime(isoDate: string): string {
   if (hours < 24) return `${hours} ชั่วโมงที่แล้ว`;
   if (days === 1) return "เมื่อวาน";
   if (days < 30) return `${days} วันที่แล้ว`;
-  const months = Math.floor(days / 30);
-  return `${months} เดือนที่แล้ว`;
+  return `${Math.floor(days / 30)} เดือนที่แล้ว`;
 }

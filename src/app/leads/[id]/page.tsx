@@ -19,24 +19,50 @@ export default function LeadDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
   const lead = useMemo(() => leads.find((item) => item.id === params.id), [leads, params.id]);
 
   useEffect(() => {
-    setLeads(loadLeads());
+    loadLeads()
+      .then(setLeads)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoaded(true));
   }, []);
 
-  function handleSave(nextLead: Lead) {
-    setLeads(upsertLead(nextLead));
-    setIsEditing(false);
+  async function handleSave(nextLead: Lead) {
+    setSaving(true);
+    setError("");
+    try {
+      setLeads(await upsertLead(nextLead));
+      setIsEditing(false);
+    } catch (e) {
+      setError("บันทึกไม่สำเร็จ: " + (e instanceof Error ? e.message : ""));
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!lead) return;
-    const confirmed = window.confirm(`ลบ Lead "${lead.customerName}" ใช่ไหม?`);
-    if (!confirmed) return;
-    deleteLead(lead.id);
-    router.push("/");
+    if (!window.confirm(`ลบ Lead "${lead.customerName}" ใช่ไหม?`)) return;
+    try {
+      await deleteLead(lead.id);
+      router.push("/");
+    } catch (e) {
+      alert("ลบไม่สำเร็จ: " + (e instanceof Error ? e.message : ""));
+    }
+  }
+
+  if (!loaded) {
+    return <main className="app-shell"><div className="empty">กำลังโหลด...</div></main>;
+  }
+
+  if (error) {
+    return <main className="app-shell"><div className="error-box">{error}</div></main>;
   }
 
   if (!lead) {
@@ -45,9 +71,7 @@ export default function LeadDetailPage() {
         <div className="empty">
           ไม่พบ Lead นี้
           <div className="section">
-            <Link className="button secondary" href="/">
-              กลับ Dashboard
-            </Link>
+            <Link className="button secondary" href="/">กลับ Dashboard</Link>
           </div>
         </div>
       </main>
@@ -63,10 +87,11 @@ export default function LeadDetailPage() {
             <p>บันทึกแล้วระบบจะคำนวณคะแนนใหม่อัตโนมัติ</p>
           </div>
         </div>
+        {error && <div className="error-box">{error}</div>}
         <LeadForm
           initialValue={toLeadInput(lead)}
           existing={{ id: lead.id, createdAt: lead.createdAt }}
-          submitLabel="บันทึก"
+          submitLabel={saving ? "กำลังบันทึก..." : "บันทึก"}
           onSubmit={handleSave}
         />
       </main>
@@ -79,19 +104,15 @@ export default function LeadDetailPage() {
         <div className="brand">
           <h1>{lead.customerName}</h1>
           <p>
-            {lead.phoneNumber || "-"} {lead.lineId ? ` | Line: ${lead.lineId}` : ""} {lead.province ? ` | ${lead.province}` : ""}
+            {lead.phoneNumber || "-"}
+            {lead.lineId ? ` | Line: ${lead.lineId}` : ""}
+            {lead.province ? ` | ${lead.province}` : ""}
           </p>
         </div>
         <div className="actions">
-          <button className="button" onClick={() => setIsEditing(true)} type="button">
-            แก้ไข
-          </button>
-          <button className="button danger" onClick={handleDelete} type="button">
-            ลบ
-          </button>
-          <Link className="button secondary" href="/">
-            กลับ Dashboard
-          </Link>
+          <button className="button" onClick={() => setIsEditing(true)} type="button">แก้ไข</button>
+          <button className="button danger" onClick={handleDelete} type="button">ลบ</button>
+          <Link className="button secondary" href="/">กลับ Dashboard</Link>
         </div>
       </div>
 
@@ -110,9 +131,7 @@ export default function LeadDetailPage() {
           <div className="card">
             <h2>เหตุผลหลัก</h2>
             <ol className="list">
-              {lead.scoringReasons.map((reason) => (
-                <li key={reason}>{reason}</li>
-              ))}
+              {lead.scoringReasons.map((reason) => <li key={reason}>{reason}</li>)}
             </ol>
           </div>
           <div className="card">

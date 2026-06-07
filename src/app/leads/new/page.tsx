@@ -1,16 +1,26 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { LeadForm } from "@/components/LeadForm";
 import { upsertLead } from "@/lib/storage";
 import type { Lead } from "@/types/lead";
 
 export default function NewLeadPage() {
   const router = useRouter();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
-  function handleSubmit(lead: Lead) {
-    upsertLead(lead);
-    router.push(`/leads/${lead.id}`);
+  async function handleSubmit(lead: Lead) {
+    setSaving(true);
+    setError("");
+    try {
+      await upsertLead(lead);
+      router.push(`/leads/${lead.id}`);
+    } catch (e) {
+      setError("บันทึกไม่สำเร็จ: " + (e instanceof Error ? e.message : ""));
+      setSaving(false);
+    }
   }
 
   return (
@@ -21,7 +31,8 @@ export default function NewLeadPage() {
           <p>เลือก Fact ของลูกค้า แล้วระบบจะคำนวณคะแนนอัตโนมัติ</p>
         </div>
       </div>
-      <LeadForm submitLabel="Save Lead" onSubmit={handleSubmit} />
+      {error && <div className="error-box">{error}</div>}
+      <LeadForm submitLabel={saving ? "กำลังบันทึก..." : "Save Lead"} onSubmit={handleSubmit} />
     </main>
   );
 }

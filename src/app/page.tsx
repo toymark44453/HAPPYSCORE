@@ -15,12 +15,15 @@ import type { FilterState } from "@/components/LeadFilters";
 export default function DashboardPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState("");
   const [filter, setFilter] = useState<FilterState>(defaultFilter);
   const [quickViewLead, setQuickViewLead] = useState<Lead | null>(null);
 
   useEffect(() => {
-    setLeads(loadLeads());
-    setLoaded(true);
+    loadLeads()
+      .then(setLeads)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoaded(true));
   }, []);
 
   const filteredLeads = useMemo(() => {
@@ -31,21 +34,22 @@ export default function DashboardPage() {
       if (filter.search) {
         const q = filter.search.toLowerCase();
         const haystack = [lead.customerName, lead.phoneNumber, lead.province, lead.projectName, lead.lineId]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
+          .filter(Boolean).join(" ").toLowerCase();
         if (!haystack.includes(q)) return false;
       }
       return true;
     });
   }, [leads, filter]);
 
-  function handleDelete(id: string) {
+  async function handleDelete(id: string) {
     const lead = leads.find((item) => item.id === id);
     if (!lead) return;
-    const confirmed = window.confirm(`ลบ Lead "${lead.customerName}" ใช่ไหม?`);
-    if (!confirmed) return;
-    setLeads(deleteLead(id));
+    if (!window.confirm(`ลบ Lead "${lead.customerName}" ใช่ไหม?`)) return;
+    try {
+      setLeads(await deleteLead(id));
+    } catch (e) {
+      alert("ลบไม่สำเร็จ: " + (e instanceof Error ? e.message : ""));
+    }
   }
 
   return (
@@ -64,14 +68,14 @@ export default function DashboardPage() {
           >
             Export CSV ({filteredLeads.length})
           </button>
-          <Link className="button" href="/leads/new">
-            + เพิ่ม Lead ใหม่
-          </Link>
+          <Link className="button" href="/leads/new">+ เพิ่ม Lead ใหม่</Link>
         </div>
       </div>
 
       {!loaded ? (
-        <div className="empty">กำลังโหลดข้อมูล...</div>
+        <div className="empty">กำลังโหลดข้อมูลจาก Supabase...</div>
+      ) : error ? (
+        <div className="error-box">โหลดข้อมูลไม่สำเร็จ: {error}</div>
       ) : (
         <>
           <DashboardKpiCards leads={leads} />
@@ -81,19 +85,10 @@ export default function DashboardPage() {
           <section className="section">
             <div className="section-header">
               <h2>Lead ทั้งหมด</h2>
-              <span className="muted">ข้อมูลเก็บใน localStorage ของ browser นี้</span>
+              <span className="muted">{leads.length} รายการ · ข้อมูลจาก Supabase (ทีมใช้ร่วมกันได้)</span>
             </div>
-            <LeadFilters
-              value={filter}
-              onChange={setFilter}
-              total={leads.length}
-              filtered={filteredLeads.length}
-            />
-            <LeadTable
-              leads={filteredLeads}
-              onDelete={handleDelete}
-              onQuickView={setQuickViewLead}
-            />
+            <LeadFilters value={filter} onChange={setFilter} total={leads.length} filtered={filteredLeads.length} />
+            <LeadTable leads={filteredLeads} onDelete={handleDelete} onQuickView={setQuickViewLead} />
           </section>
         </>
       )}

@@ -11,8 +11,9 @@ function LastContact({ leadId }: { leadId: string }) {
   const [label, setLabel] = useState<string | null>(null);
 
   useEffect(() => {
-    const date = getLastContactDate(leadId);
-    setLabel(date ? formatRelativeTime(date) : null);
+    getLastContactDate(leadId).then((date) => {
+      setLabel(date ? formatRelativeTime(date) : null);
+    }).catch(() => setLabel(null));
   }, [leadId]);
 
   if (!label) return <span className="muted">—</span>;

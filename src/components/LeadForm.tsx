@@ -4,7 +4,9 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { buildScoredLead } from "@/lib/leadFactory";
 import { validateLeadInput } from "@/lib/validation";
+import { SALESPEOPLE } from "@/lib/users";
 import type { Lead, LeadInput } from "@/types/lead";
+import type { Salesperson } from "@/types/salesperson";
 import { AudioAnalyzer } from "@/components/AudioAnalyzer";
 import { LeadScoringForm } from "@/components/LeadScoringForm";
 import { LeadScoreCard } from "@/components/LeadScoreCard";
@@ -37,12 +39,14 @@ export function LeadForm({
   initialValue = defaultLeadInput,
   existing,
   submitLabel,
-  onSubmit
+  onSubmit,
+  currentUser,
 }: {
   initialValue?: LeadInput;
   existing?: Pick<Lead, "id" | "createdAt"> & { pipelineStage?: Lead["pipelineStage"] };
   submitLabel: string;
   onSubmit: (lead: Lead) => void;
+  currentUser?: Salesperson;
 }) {
   const [value, setValue] = useState<LeadInput>(initialValue);
   const [errors, setErrors] = useState<string[]>([]);
@@ -61,8 +65,19 @@ export function LeadForm({
     const nextErrors = validateLeadInput(value);
     setErrors(nextErrors);
     if (nextErrors.length > 0) return;
-    onSubmit(buildScoredLead(value, existing));
+
+    let submitValue = value;
+    if (currentUser?.role === "sales") {
+      submitValue = {
+        ...value,
+        salesOwnerId: currentUser.id,
+        salesOwner: currentUser.name,
+      };
+    }
+    onSubmit(buildScoredLead(submitValue, existing));
   }
+
+  const salesList = SALESPEOPLE.filter((u) => u.role === "sales");
 
   return (
     <form onSubmit={handleSubmit}>
@@ -112,8 +127,30 @@ export function LeadForm({
                 <input id="leadSource" value={value.leadSource ?? ""} onChange={(event) => updateField("leadSource", event.target.value)} />
               </div>
               <div className="field">
-                <label htmlFor="salesOwner">เซลล์ผู้ดูแล</label>
-                <input id="salesOwner" value={value.salesOwner ?? ""} onChange={(event) => updateField("salesOwner", event.target.value)} />
+                <label htmlFor="salesOwner">ผู้รับผิดชอบ Lead</label>
+                {currentUser?.role === "sales" ? (
+                  <input id="salesOwner" value={currentUser.name} disabled />
+                ) : (
+                  <select
+                    id="salesOwner"
+                    value={value.salesOwnerId ?? ""}
+                    onChange={(e) => {
+                      const sp = salesList.find((u) => u.id === e.target.value);
+                      if (sp) {
+                        updateField("salesOwnerId", sp.id);
+                        updateField("salesOwner", sp.name);
+                      } else {
+                        updateField("salesOwnerId", undefined);
+                        updateField("salesOwner", "");
+                      }
+                    }}
+                  >
+                    <option value="">— เลือกเซลล์ —</option>
+                    {salesList.map((u) => (
+                      <option key={u.id} value={u.id}>{u.name}</option>
+                    ))}
+                  </select>
+                )}
               </div>
               <div className="field full">
                 <label htmlFor="installationAddress">ที่อยู่ติดตั้ง</label>

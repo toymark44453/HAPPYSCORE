@@ -5,12 +5,14 @@ import { useState } from "react";
 import { LeadForm } from "@/components/LeadForm";
 import { upsertLead } from "@/lib/storage";
 import { addSnapshot, buildFirstSnapshot } from "@/lib/snapshotStorage";
+import { getCurrentUser } from "@/lib/users";
 import type { Lead } from "@/types/lead";
 
 export default function NewLeadPage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [currentUser] = useState(() => getCurrentUser());
 
   async function handleSubmit(lead: Lead) {
     setSaving(true);
@@ -34,7 +36,11 @@ export default function NewLeadPage() {
         </div>
       </div>
       {error && <div className="error-box">{error}</div>}
-      <LeadForm submitLabel={saving ? "กำลังบันทึก..." : "Save Lead"} onSubmit={handleSubmit} />
+      <LeadForm
+        submitLabel={saving ? "กำลังบันทึก..." : "Save Lead"}
+        onSubmit={handleSubmit}
+        currentUser={currentUser}
+      />
     </main>
   );
 }

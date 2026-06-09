@@ -69,6 +69,8 @@ export interface LeadInput {
   projectName?: string;
   leadSource?: string;
   salesOwner?: string;
+  salesOwnerId?: string;
+  salesOwnerName?: string;
   customerNote?: string;
   pipelineStage?: PipelineStage;
   installationLocationType: InstallationLocationType;

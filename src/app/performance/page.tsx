@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { GradeMovementTable } from "@/components/GradeMovementTable";
 import { LeadProgressTable } from "@/components/LeadProgressTable";
 import { PerformanceKpiCards } from "@/components/PerformanceKpiCards";
 import { SalesOwnerPerformanceTable } from "@/components/SalesOwnerPerformanceTable";
+import { CurrentUserSelector } from "@/components/CurrentUserSelector";
 import {
   buildLeadProgressEntries,
   calculatePerformanceMetrics,
@@ -13,24 +14,33 @@ import {
 } from "@/lib/performance";
 import { loadLeads } from "@/lib/storage";
 import { loadSnapshots } from "@/lib/snapshotStorage";
+import { getCurrentUser } from "@/lib/users";
+import { getVisibleLeadsForUser } from "@/lib/visibilityFilter";
 import type { Lead } from "@/types/lead";
+import type { Salesperson } from "@/types/salesperson";
 import type { LeadScoreSnapshot, PerformanceMetrics, SalesOwnerPerformance, LeadProgressEntry } from "@/types/performance";
 
 export default function PerformancePage() {
-  const [leads, setLeads] = useState<Lead[]>([]);
+  const [allLeads, setAllLeads] = useState<Lead[]>([]);
   const [snapshots, setSnapshots] = useState<LeadScoreSnapshot[]>([]);
+  const [currentUser, setCurrentUserState] = useState<Salesperson>(getCurrentUser());
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     Promise.all([loadLeads(), loadSnapshots()])
-      .then(([l, s]) => { setLeads(l); setSnapshots(s); })
+      .then(([l, s]) => { setAllLeads(l); setSnapshots(s); })
       .catch((e) => setError(e.message))
       .finally(() => setLoaded(true));
   }, []);
 
+  const visibleLeads = useMemo(
+    () => getVisibleLeadsForUser(allLeads, currentUser),
+    [allLeads, currentUser]
+  );
+
   const metrics: PerformanceMetrics = loaded
-    ? calculatePerformanceMetrics(leads, snapshots)
+    ? calculatePerformanceMetrics(visibleLeads, snapshots)
     : {
         totalLeads: 0, improvedLeads: 0, declinedLeads: 0, stableLeads: 0,
         improvedRate: 0, declinedRate: 0, stableRate: 0,
@@ -41,11 +51,11 @@ export default function PerformancePage() {
       };
 
   const salesPerf: SalesOwnerPerformance[] = loaded
-    ? calculateSalesOwnerPerformance(leads, snapshots)
+    ? calculateSalesOwnerPerformance(visibleLeads, snapshots)
     : [];
 
   const progressEntries: LeadProgressEntry[] = loaded
-    ? buildLeadProgressEntries(leads, snapshots)
+    ? buildLeadProgressEntries(visibleLeads, snapshots)
     : [];
 
   return (
@@ -56,6 +66,8 @@ export default function PerformancePage() {
           <p>วัดผลทีมขาย — Lead ดีขึ้นกี่คน กี่เปอร์เซ็นต์</p>
         </div>
         <div className="actions">
+          <CurrentUserSelector onChange={setCurrentUserState} />
+          <Link className="button secondary" href="/team">👥 Team</Link>
           <Link className="button secondary" href="/">กลับ Dashboard</Link>
         </div>
       </div>
@@ -69,7 +81,10 @@ export default function PerformancePage() {
           <section className="section">
             <div className="section-header">
               <h2>KPI Overview</h2>
-              <span className="muted">{snapshots.length} snapshots · {leads.length} leads</span>
+              <span className="muted">
+                {snapshots.length} snapshots · {visibleLeads.length} leads
+                {currentUser.role !== "owner" ? ` · ${currentUser.name}` : " · ทีมทั้งหมด"}
+              </span>
             </div>
             <PerformanceKpiCards m={metrics} />
           </section>

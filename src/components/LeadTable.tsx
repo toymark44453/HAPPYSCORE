@@ -25,10 +25,12 @@ export function LeadTable({
   leads,
   onDelete,
   onQuickView,
+  showSalesOwner = false,
 }: {
   leads: Lead[];
   onDelete: (id: string) => void;
   onQuickView?: (lead: Lead) => void;
+  showSalesOwner?: boolean;
 }) {
   if (leads.length === 0)
     return <div className="empty">ไม่พบ Lead ที่ตรงกับเงื่อนไข</div>;
@@ -39,6 +41,7 @@ export function LeadTable({
         <thead>
           <tr>
             <th>ชื่อลูกค้า</th>
+            {showSalesOwner && <th>ผู้รับผิดชอบ</th>}
             <th>จังหวัด</th>
             <th>โครงการ</th>
             <th>Pipeline</th>
@@ -60,6 +63,7 @@ export function LeadTable({
                 <strong>{lead.customerName}</strong>
                 <div className="muted">{lead.phoneNumber || lead.lineId}</div>
               </td>
+              {showSalesOwner && <td>{lead.salesOwnerName ?? lead.salesOwner ?? "—"}</td>}
               <td>{lead.province || "-"}</td>
               <td>{lead.projectName || "-"}</td>
               <td>

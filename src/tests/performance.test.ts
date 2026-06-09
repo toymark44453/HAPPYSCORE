@@ -62,6 +62,7 @@ function makeFirstSnapshot(
 const baseLead: Lead = {
   id: "l1",
   customerName: "ทดสอบ",
+  pipelineStage: "new",
   installationLocationType: "bangkok_metropolitan",
   projectValueLevel: "luxury_over_6m",
   sitePhotoStatus: "detailed_with_measurement",

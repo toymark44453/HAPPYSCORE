@@ -31,6 +31,7 @@ export default function DashboardPage() {
       if (filter.grade !== "all" && lead.grade !== filter.grade) return false;
       if (filter.temperature !== "all" && lead.temperature !== filter.temperature) return false;
       if (filter.segment !== "all" && lead.segment !== filter.segment) return false;
+      if (filter.pipeline !== "all" && lead.pipelineStage !== filter.pipeline) return false;
       if (filter.search) {
         const q = filter.search.toLowerCase();
         const haystack = [lead.customerName, lead.phoneNumber, lead.province, lead.projectName, lead.lineId]
@@ -68,6 +69,7 @@ export default function DashboardPage() {
           >
             Export CSV ({filteredLeads.length})
           </button>
+          <Link className="button secondary" href="/performance">📊 Performance</Link>
           <Link className="button" href="/leads/new">+ เพิ่ม Lead ใหม่</Link>
         </div>
       </div>

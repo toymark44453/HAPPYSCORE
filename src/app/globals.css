@@ -11,6 +11,9 @@
   --warning: #b54708;
   --success: #067647;
   --info: #175cd3;
+  --color-fit: #0f766e;
+  --color-interest: #7c3aed;
+  --color-total: #1d4ed8;
 }
 
 * {
@@ -919,4 +922,125 @@ th {
   .score-large {
     font-size: 44px;
   }
+}
+
+/* Performance Page */
+.kpi-sub {
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+/* ── Pipeline Stage Badge ────────────────────────────── */
+.pipeline-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.stage-new        { background: #e0f2fe; color: #0369a1; }
+.stage-contacted  { background: #fef9c3; color: #854d0e; }
+.stage-quoted     { background: #ede9fe; color: #6d28d9; }
+.stage-won        { background: #dcfce7; color: #15803d; }
+.stage-lost       { background: #fee2e2; color: #b91c1c; }
+
+/* ── Pipeline Stage Selector (in form) ──────────────── */
+.pipeline-stage-selector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.pipeline-stage-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  transition: all 0.15s;
+}
+
+.pipeline-stage-btn:hover {
+  border-color: var(--primary);
+  color: var(--text);
+}
+
+.pipeline-stage-btn.active.stage-new        { background: #e0f2fe; border-color: #0369a1; color: #0369a1; }
+.pipeline-stage-btn.active.stage-contacted  { background: #fef9c3; border-color: #854d0e; color: #854d0e; }
+.pipeline-stage-btn.active.stage-quoted     { background: #ede9fe; border-color: #6d28d9; color: #6d28d9; }
+.pipeline-stage-btn.active.stage-won        { background: #dcfce7; border-color: #15803d; color: #15803d; }
+.pipeline-stage-btn.active.stage-lost       { background: #fee2e2; border-color: #b91c1c; color: #b91c1c; }
+
+.stage-emoji { font-size: 16px; }
+
+/* ── Score Bars ──────────────────────────────────────── */
+.score-bar-section {
+  display: grid;
+  gap: 12px;
+}
+
+.score-bar-row {
+  display: grid;
+  gap: 4px;
+}
+
+.score-bar-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #344054;
+}
+
+.score-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.score-bar-track {
+  flex: 1;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.score-bar-label {
+  font-size: 13px;
+  font-weight: 700;
+  min-width: 44px;
+  text-align: right;
+  color: var(--text);
+}
+
+.score-bar-meta {
+  font-size: 12px;
+  margin-top: 2px;
 }

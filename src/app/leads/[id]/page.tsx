@@ -10,8 +10,10 @@ import { LeadGradeBadge } from "@/components/LeadGradeBadge";
 import { LeadRecommendation } from "@/components/LeadRecommendation";
 import { LeadScoreCard } from "@/components/LeadScoreCard";
 import { LeadTemperatureBadge } from "@/components/LeadTemperatureBadge";
+import { PipelineStageBadge } from "@/components/PipelineStageBadge";
 import { RiskFlags } from "@/components/RiskFlags";
 import { deleteLead, loadLeads, upsertLead } from "@/lib/storage";
+import { addSnapshot, buildUpdateSnapshot } from "@/lib/snapshotStorage";
 import { toLeadInput } from "@/lib/leadFactory";
 import type { Lead } from "@/types/lead";
 
@@ -37,7 +39,9 @@ export default function LeadDetailPage() {
     setSaving(true);
     setError("");
     try {
+      const snapshotPayload = lead ? buildUpdateSnapshot(lead, nextLead) : null;
       setLeads(await upsertLead(nextLead));
+      if (snapshotPayload) await addSnapshot(snapshotPayload);
       setIsEditing(false);
     } catch (e) {
       setError("บันทึกไม่สำเร็จ: " + (e instanceof Error ? e.message : ""));
@@ -90,7 +94,7 @@ export default function LeadDetailPage() {
         {error && <div className="error-box">{error}</div>}
         <LeadForm
           initialValue={toLeadInput(lead)}
-          existing={{ id: lead.id, createdAt: lead.createdAt }}
+          existing={{ id: lead.id, createdAt: lead.createdAt, pipelineStage: lead.pipelineStage }}
           submitLabel={saving ? "กำลังบันทึก..." : "บันทึก"}
           onSubmit={handleSave}
         />
@@ -123,6 +127,7 @@ export default function LeadDetailPage() {
             <h2>สรุป</h2>
             <p>{lead.recommendation}</p>
             <div className="actions">
+              <PipelineStageBadge stage={lead.pipelineStage} />
               <LeadGradeBadge grade={lead.grade} />
               <LeadTemperatureBadge temperature={lead.temperature} />
               <span className="badge cold">{lead.segment}</span>

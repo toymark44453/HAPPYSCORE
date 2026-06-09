@@ -10,7 +10,7 @@ function createId(): string {
   return `lead_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
 
-export function buildScoredLead(input: LeadInput, existing?: Pick<Lead, "id" | "createdAt">): Lead {
+export function buildScoredLead(input: LeadInput, existing?: Pick<Lead, "id" | "createdAt"> & { pipelineStage?: Lead["pipelineStage"] }): Lead {
   const now = new Date().toISOString();
   const scores = calculateScores(input);
   const totalScore = clampScore(scores.totalScore);
@@ -21,6 +21,7 @@ export function buildScoredLead(input: LeadInput, existing?: Pick<Lead, "id" | "
   const draft: Lead = {
     ...input,
     id: existing?.id ?? createId(),
+    pipelineStage: input.pipelineStage ?? existing?.pipelineStage ?? "new",
     ...scores,
     totalScore,
     grade,
@@ -52,6 +53,7 @@ export function toLeadInput(lead: Lead): LeadInput {
     leadSource: lead.leadSource,
     salesOwner: lead.salesOwner,
     customerNote: lead.customerNote,
+    pipelineStage: lead.pipelineStage,
     installationLocationType: lead.installationLocationType,
     projectValueLevel: lead.projectValueLevel,
     sitePhotoStatus: lead.sitePhotoStatus,

@@ -71,7 +71,7 @@ export async function getLastContactDate(leadId: string): Promise<string | null>
     .eq("lead_id", leadId)
     .order("created_at", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (error || !data) return null;
   return data.created_at as string;

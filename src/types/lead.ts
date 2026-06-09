@@ -1,5 +1,7 @@
 export type LeadGrade = "A" | "B" | "C" | "D";
 
+export type PipelineStage = "new" | "contacted" | "quoted" | "won" | "lost";
+
 export type LeadTemperature = "HOT" | "WARM" | "COOL" | "COLD";
 
 export type InstallationLocationType =
@@ -68,6 +70,7 @@ export interface LeadInput {
   leadSource?: string;
   salesOwner?: string;
   customerNote?: string;
+  pipelineStage?: PipelineStage;
   installationLocationType: InstallationLocationType;
   projectValueLevel: ProjectValueLevel;
   sitePhotoStatus: SitePhotoStatus;
@@ -79,6 +82,7 @@ export interface LeadInput {
 
 export interface Lead extends LeadInput {
   id: string;
+  pipelineStage: PipelineStage;
   installationLocationScore: number;
   projectValueScore: number;
   sitePhotoScore: number;

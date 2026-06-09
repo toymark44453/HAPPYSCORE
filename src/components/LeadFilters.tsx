@@ -1,12 +1,13 @@
 "use client";
 
-import type { LeadGrade, LeadTemperature, LeadSegment } from "@/types/lead";
+import type { LeadGrade, LeadTemperature, LeadSegment, PipelineStage } from "@/types/lead";
 
 export interface FilterState {
   search: string;
   grade: LeadGrade | "all";
   temperature: LeadTemperature | "all";
   segment: LeadSegment | "all";
+  pipeline: PipelineStage | "all";
 }
 
 export const defaultFilter: FilterState = {
@@ -14,6 +15,7 @@ export const defaultFilter: FilterState = {
   grade: "all",
   temperature: "all",
   segment: "all",
+  pipeline: "all",
 };
 
 export function LeadFilters({
@@ -35,7 +37,8 @@ export function LeadFilters({
     value.search !== "" ||
     value.grade !== "all" ||
     value.temperature !== "all" ||
-    value.segment !== "all";
+    value.segment !== "all" ||
+    value.pipeline !== "all";
 
   return (
     <div className="filter-bar">
@@ -78,6 +81,18 @@ export function LeadFilters({
           <option value="Nurture Target">Nurture Target</option>
           <option value="Quick Win">Quick Win</option>
           <option value="Low Priority">Low Priority</option>
+        </select>
+
+        <select
+          value={value.pipeline}
+          onChange={(e) => update("pipeline", e.target.value as FilterState["pipeline"])}
+        >
+          <option value="all">ทุก Pipeline Stage</option>
+          <option value="new">🆕 New</option>
+          <option value="contacted">📞 Contacted</option>
+          <option value="quoted">📋 Quoted</option>
+          <option value="won">🏆 Won</option>
+          <option value="lost">❌ Lost</option>
         </select>
 
         {hasFilter && (

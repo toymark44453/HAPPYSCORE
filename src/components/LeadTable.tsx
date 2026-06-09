@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Lead } from "@/types/lead";
 import { LeadGradeBadge } from "@/components/LeadGradeBadge";
 import { LeadTemperatureBadge } from "@/components/LeadTemperatureBadge";
+import { PipelineStageBadge } from "@/components/PipelineStageBadge";
 import { getLastContactDate, formatRelativeTime } from "@/lib/activityStorage";
 
 function LastContact({ leadId }: { leadId: string }) {
@@ -40,6 +41,7 @@ export function LeadTable({
             <th>ชื่อลูกค้า</th>
             <th>จังหวัด</th>
             <th>โครงการ</th>
+            <th>Pipeline</th>
             <th>คะแนนรวม</th>
             <th>Fit</th>
             <th>Interest</th>
@@ -60,6 +62,9 @@ export function LeadTable({
               </td>
               <td>{lead.province || "-"}</td>
               <td>{lead.projectName || "-"}</td>
+              <td>
+                <PipelineStageBadge stage={lead.pipelineStage} />
+              </td>
               <td>
                 <strong>{lead.totalScore}/100</strong>
               </td>

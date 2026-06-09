@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { LeadForm } from "@/components/LeadForm";
 import { upsertLead } from "@/lib/storage";
+import { addSnapshot, buildFirstSnapshot } from "@/lib/snapshotStorage";
 import type { Lead } from "@/types/lead";
 
 export default function NewLeadPage() {
@@ -16,6 +17,7 @@ export default function NewLeadPage() {
     setError("");
     try {
       await upsertLead(lead);
+      await addSnapshot(buildFirstSnapshot(lead));
       router.push(`/leads/${lead.id}`);
     } catch (e) {
       setError("บันทึกไม่สำเร็จ: " + (e instanceof Error ? e.message : ""));

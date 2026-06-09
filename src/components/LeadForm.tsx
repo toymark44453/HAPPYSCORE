@@ -23,6 +23,7 @@ export const defaultLeadInput: LeadInput = {
   leadSource: "Line",
   salesOwner: "",
   customerNote: "",
+  pipelineStage: "new",
   installationLocationType: "unknown",
   projectValueLevel: "unknown",
   sitePhotoStatus: "not_sent",
@@ -39,7 +40,7 @@ export function LeadForm({
   onSubmit
 }: {
   initialValue?: LeadInput;
-  existing?: Pick<Lead, "id" | "createdAt">;
+  existing?: Pick<Lead, "id" | "createdAt"> & { pipelineStage?: Lead["pipelineStage"] };
   submitLabel: string;
   onSubmit: (lead: Lead) => void;
 }) {

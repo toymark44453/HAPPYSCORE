@@ -1,4 +1,12 @@
-import type { LeadInput } from "@/types/lead";
+import type { LeadInput, PipelineStage } from "@/types/lead";
+
+const pipelineOptions: { value: PipelineStage; label: string; emoji: string }[] = [
+  { value: "new", label: "New", emoji: "🆕" },
+  { value: "contacted", label: "Contacted", emoji: "📞" },
+  { value: "quoted", label: "Quoted", emoji: "📋" },
+  { value: "won", label: "Won", emoji: "🏆" },
+  { value: "lost", label: "Lost", emoji: "❌" },
+];
 
 type Option<T extends string> = {
   value: T;
@@ -87,17 +95,36 @@ export function LeadScoringForm({
   onChange: <T extends keyof LeadInput>(name: T, fieldValue: LeadInput[T]) => void;
 }) {
   return (
-    <div className="card">
-      <h2>Fact สำหรับให้คะแนน</h2>
-      <div className="grid form-grid">
-        <SelectField label="สถานที่ติดตั้ง" name="installationLocationType" value={value.installationLocationType} options={locationOptions} onChange={onChange} />
-        <SelectField label="มูลค่าโครงการ/กำลังซื้อ" name="projectValueLevel" value={value.projectValueLevel} options={projectOptions} onChange={onChange} />
-        <SelectField label="รูปและข้อมูลหน้างาน" name="sitePhotoStatus" value={value.sitePhotoStatus} options={photoOptions} onChange={onChange} />
-        <SelectField label="ความเร่งด่วน" name="urgencyStatus" value={value.urgencyStatus} options={urgencyOptions} onChange={onChange} />
-        <SelectField label="ใบเสนอราคา/การรับราคา" name="quotationStatus" value={value.quotationStatus} options={quotationOptions} onChange={onChange} />
-        <SelectField label="การสื่อสาร" name="communicationStatus" value={value.communicationStatus} options={communicationOptions} onChange={onChange} />
-        <SelectField label="นัดวัดพื้นที่" name="siteSurveyStatus" value={value.siteSurveyStatus} options={surveyOptions} onChange={onChange} />
+    <>
+      <div className="card">
+        <h2>Pipeline Stage</h2>
+        <div className="pipeline-stage-selector">
+          {pipelineOptions.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              className={`pipeline-stage-btn${value.pipelineStage === opt.value ? " active" : ""} stage-${opt.value}`}
+              onClick={() => onChange("pipelineStage", opt.value)}
+            >
+              <span className="stage-emoji">{opt.emoji}</span>
+              <span>{opt.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
-    </div>
+
+      <div className="card">
+        <h2>Fact สำหรับให้คะแนน</h2>
+        <div className="grid form-grid">
+          <SelectField label="สถานที่ติดตั้ง" name="installationLocationType" value={value.installationLocationType} options={locationOptions} onChange={onChange} />
+          <SelectField label="มูลค่าโครงการ/กำลังซื้อ" name="projectValueLevel" value={value.projectValueLevel} options={projectOptions} onChange={onChange} />
+          <SelectField label="รูปและข้อมูลหน้างาน" name="sitePhotoStatus" value={value.sitePhotoStatus} options={photoOptions} onChange={onChange} />
+          <SelectField label="ความเร่งด่วน" name="urgencyStatus" value={value.urgencyStatus} options={urgencyOptions} onChange={onChange} />
+          <SelectField label="ใบเสนอราคา/การรับราคา" name="quotationStatus" value={value.quotationStatus} options={quotationOptions} onChange={onChange} />
+          <SelectField label="การสื่อสาร" name="communicationStatus" value={value.communicationStatus} options={communicationOptions} onChange={onChange} />
+          <SelectField label="นัดวัดพื้นที่" name="siteSurveyStatus" value={value.siteSurveyStatus} options={surveyOptions} onChange={onChange} />
+        </div>
+      </div>
+    </>
   );
 }
